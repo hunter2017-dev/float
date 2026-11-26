@@ -80,6 +80,39 @@ Samples are in `examples/`.
 
 Splits a buyback into consecutive buys that each keep price impact ≤ 1%.
 
+## Proposals
+
+Commands for the community [proposals](../proposals/README.md). None of
+them are official Float features, and none send transactions.
+
+### `family check <parent> --platform-config <addr> [--pair SOL] [--paired-usd <price>] [--pool <cpmm-pool>]`
+
+Checks the [Coin Families](../proposals/coin-families.md) parent rules (§3)
+from on-chain data and explains each one: Float coin (LaunchLab platform
+config), graduated, age since graduation (CPMM pool `open_time`), paired-side
+liquidity, issuer pause, depth. `$FLOAT` is always eligible. Tune the
+thresholds with `--min-age-days`, `--min-pool-usd` and `--max-depth`.
+
+Float's LaunchLab platform config is not listed in the official docs: read
+it from any coin on [floatlaunch.xyz/tokens](https://www.floatlaunch.xyz/tokens)
+with `float pool <mint>`. `--paired-usd` is the USD price of the paired token
+(defaults to 1 for USDC).
+
+### `family simulate --parent <mint> --children N --volume <usd> [--days 30] [--mode B|A]`
+
+Daily parent demand from `N` children trading `--volume` USD each per day
+(§7). Mode B buys the holders' share of each child's fees in the parent;
+Mode A adds `--net-inflow-bps` of volume as parent buys and
+`--grad-prob × --locked-usd` of parent locked at graduation. Price impact
+uses the parent's CPMM pool. The output is a scenario, not a forecast.
+
+| Flag | Default |
+| --- | --- |
+| `--fee-bps` | `75`: the 1% fee minus Raydium's 0.25% on the curve (official docs) |
+| `--holders-bps` | `1750`: holders share of standard coins (official docs) |
+| `--decay` | `1` (flat volume); `0.95` = −5% per day |
+| `--price-usd` | parent price when it has no pool (e.g. `$FLOAT` without `--pool`) |
+
 ## Transactions
 
 ### `buy <coin-mint> <amount> --keypair <file>` / `sell <coin-mint> <amount> --keypair <file>`

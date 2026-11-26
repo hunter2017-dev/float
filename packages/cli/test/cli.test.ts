@@ -74,6 +74,49 @@ const accounts = new Map<string, { owner: PublicKey; data: Uint8Array }>([
   [MINTS.WSOL.toBase58(), { owner: TOKEN_PROGRAM_ID, data: mintData }],
 ]);
 
+// --- Coin Families: a graduated Float coin with its CPMM pool (WSOL side: 1 000 SOL).
+const parentCoin = Keypair.generate().publicKey;
+const parentLaunchPool = launchLab.launchLabPda.pool(parentCoin, MINTS.WSOL);
+const ammConfig0 = cpmm.cpmmPda.ammConfig(0);
+const [pm0, pm1] = cpmm.sortMints(parentCoin, MINTS.WSOL);
+const parentCpmmPool = cpmm.cpmmPda.pool(ammConfig0, pm0, pm1);
+const parentIs0 = pm0.equals(parentCoin);
+const PARENT_RESERVE = 100_000_000_000n; // 100 000 parent (6 decimals) → $1.50 at $150/SOL
+const SOL_RESERVE = 1_000_000_000_000n; // 1 000 SOL
+const graduatedAt = BigInt(Math.floor(Date.now() / 1000)) - 10n * 86_400n;
+
+function tokenAccountData(mint: PublicKey, owner: PublicKey, amount: bigint): Uint8Array {
+  return new Writer().bytes(mint.bytes).bytes(owner.bytes).u64(amount).u32(0).bytes(new Uint8Array(32)).u8(1).u32(0).u64(0n).u64(0n).u32(0).bytes(new Uint8Array(32)).toBytes();
+}
+
+const cpmmVault0 = cpmm.cpmmPda.vault(parentCpmmPool, pm0);
+const cpmmVault1 = cpmm.cpmmPda.vault(parentCpmmPool, pm1);
+accounts.set(parentLaunchPool.toBase58(), {
+  owner: launchLab.LAUNCHLAB_PROGRAM_ID,
+  data: poolData({ status: 2, base_mint: parentCoin, real_base: 793_100_000_000_000n, real_quote: 85_000_000_000n, platform_fee: 0n }),
+});
+accounts.set(parentCpmmPool.toBase58(), {
+  owner: cpmm.CPMM_PROGRAM_ID,
+  data: encodeAccount(cpmm.cpmmCoder, "PoolState", {
+    amm_config: ammConfig0, pool_creator: platformAdmin, token_0_vault: cpmmVault0, token_1_vault: cpmmVault1,
+    lp_mint: cpmm.cpmmPda.lpMint(parentCpmmPool), token_0_mint: pm0, token_1_mint: pm1,
+    token_0_program: TOKEN_PROGRAM_ID, token_1_program: TOKEN_PROGRAM_ID, observation_key: cpmm.cpmmPda.observation(parentCpmmPool),
+    auth_bump: 255, status: 0, lp_mint_decimals: 9, mint_0_decimals: parentIs0 ? 6 : 9, mint_1_decimals: parentIs0 ? 9 : 6,
+    lp_supply: 1n, protocol_fees_token_0: 0n, protocol_fees_token_1: 0n, fund_fees_token_0: 0n, fund_fees_token_1: 0n,
+    open_time: graduatedAt, recent_epoch: 0n, creator_fee_on: 0, enable_creator_fee: false, padding1: new Uint8Array(6),
+    creator_fees_token_0: 0n, creator_fees_token_1: 0n, padding: Array(28).fill(0n),
+  }),
+});
+accounts.set(ammConfig0.toBase58(), {
+  owner: cpmm.CPMM_PROGRAM_ID,
+  data: encodeAccount(cpmm.cpmmCoder, "AmmConfig", {
+    bump: 255, disable_create_pool: false, index: 0, trade_fee_rate: 2_500n, protocol_fee_rate: 120_000n, fund_fee_rate: 40_000n,
+    create_pool_fee: 0n, protocol_owner: PublicKey.default, fund_owner: PublicKey.default, creator_fee_rate: 0n, padding: Array(15).fill(0n),
+  }),
+});
+accounts.set(cpmmVault0.toBase58(), { owner: TOKEN_PROGRAM_ID, data: tokenAccountData(pm0, platformAdmin, parentIs0 ? PARENT_RESERVE : SOL_RESERVE) });
+accounts.set(cpmmVault1.toBase58(), { owner: TOKEN_PROGRAM_ID, data: tokenAccountData(pm1, platformAdmin, parentIs0 ? SOL_RESERVE : PARENT_RESERVE) });
+
 function rawAccount(addr: string) {
   const a = accounts.get(addr);
   if (!a) return null;
@@ -181,4 +224,57 @@ test("airdrop: ranks a CSV of trades", async () => {
 test("unknown command and usage errors return exit code 2", async () => {
   assert.equal((await cli("nope")).code, 2);
   assert.equal((await cli("airdrop")).code, 2);
+  assert.equal((await cli("family")).code, 2);
+  assert.equal((await cli("family", "simulate", "--parent", parentCoin.toBase58())).code, 2);
+});
+
+// ----------------------------------------------------------- Coin Families
+
+test("family check: graduated Float coin with $150k paired liquidity is eligible", async () => {
+  const { code, out } = await cli("family", "check", parentCoin.toBase58(), "--platform-config", platformConfig.toBase58(), "--paired-usd", "150", "--json");
+  assert.equal(code, 0, out);
+  const j = JSON.parse(out);
+  assert.equal(j.eligible, true, out);
+  assert.equal(j.cpmmPool, parentCpmmPool.toBase58());
+  assert.deepEqual(j.rules.map((r: { ok: boolean }) => r.ok), [true, true, true, true, true, true]);
+});
+
+test("family check: explains why a coin is not eligible", async () => {
+  const notGraduated = await cli("family", "check", coin.toBase58(), "--platform-config", platformConfig.toBase58(), "--paired-usd", "150");
+  assert.equal(notGraduated.code, 0, notGraduated.out);
+  assert.match(notGraduated.out, /Not eligible as a parent: ParentNotGraduated/);
+  const thin = await cli("family", "check", parentCoin.toBase58(), "--platform-config", platformConfig.toBase58(), "--paired-usd", "50");
+  assert.match(thin.out, /Not eligible as a parent: ParentPoolTooThin/);
+  const young = await cli("family", "check", parentCoin.toBase58(), "--platform-config", platformConfig.toBase58(), "--paired-usd", "150", "--min-age-days", "30");
+  assert.match(young.out, /ParentTooYoung/);
+  const unknown = await cli("family", "check", parentCoin.toBase58(), "--paired-usd", "150");
+  assert.match(unknown.out, /ParentNotFloatCoin/);
+  assert.match(unknown.out, /No --platform-config given/);
+});
+
+test("family simulate: 5 children × $200k/day buy parent through its pool, labelled as scenarios", async () => {
+  const { code, out } = await cli("family", "simulate", "--parent", parentCoin.toBase58(), "--children", "5", "--volume", "200000", "--paired-usd", "150", "--days", "30", "--json");
+  assert.equal(code, 0, out);
+  const j = JSON.parse(out);
+  assert.equal(j.mode, "B");
+  assert.equal(j.parentPriceUsd, 1.5); // 1 000 SOL × $150 / 100 000 parent
+  assert.equal(j.days.length, 30);
+  assert.equal(j.days[0].holderRewardsUsd, 1_312.5); // 5 × $200 000 × 0.75 % × 17.5 %
+  assert.equal(j.days[0].parentBought, 875);
+  // 8.75 SOL into a 1 000 SOL pool moves the price ~1.7 %: two ≤ 1 % swaps.
+  assert.ok(j.days[0].priceImpact > 0.015 && j.days[0].priceImpact < 0.02, String(j.days[0].priceImpact));
+  assert.equal(j.days[0].swapsWithinCap, 2);
+  assert.match(j.disclaimer, /^Scenarios, not forecasts/);
+
+  const spec = await cli("family", "simulate", "--parent", parentCoin.toBase58(), "--children", "1", "--volume", "200000", "--fee-bps", "100", "--paired-usd", "150", "--days", "1");
+  assert.match(spec.out, /\$350/); // spec §7 example
+  assert.match(spec.out, /Scenarios, not forecasts/);
+});
+
+test("family simulate: Mode A reports parent locked at graduation", async () => {
+  const { code, out } = await cli("family", "simulate", "--parent", parentCoin.toBase58(), "--mode", "A", "--children", "10", "--volume", "50000",
+    "--paired-usd", "150", "--days", "7", "--net-inflow-bps", "300", "--grad-prob", "0.2", "--locked-usd", "40000");
+  assert.equal(code, 0, out);
+  assert.match(out, /Mode A \(native quote\)/);
+  assert.match(out, /Expected parent locked forever at graduation: \$80,000/);
 });

@@ -29,3 +29,6 @@ export * from "./float/cycle.ts";
 export * from "./float/history.ts";
 export * from "./float/merkle.ts";
 export * as router from "./router/index.ts";
+
+// Community proposals (docs/proposals), not official Float features
+export * as families from "./float/families.ts";
