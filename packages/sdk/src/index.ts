@@ -33,3 +33,4 @@ export * as router from "./router/index.ts";
 // Community proposals (docs/proposals), not official Float features
 export * as families from "./float/families.ts";
 export * as lobby from "./float/lobby.ts";
+export * as floatIndex from "./float/floatIndex.ts";

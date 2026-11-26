@@ -133,6 +133,37 @@ CSV columns: `wallet,amount`, amounts in paired-token units. See
 | `--fee-rate` (offline) | `10000` (the official 1% fee, in 1e-6 units) |
 | `--supply` (offline) | 1,000,000,000 coins (official) at `--base-decimals 6` |
 
+### `index weights --stats <stats.json> [--platform-config <addr>] [--discover] [--n 10] [--cap-bps 1500]`
+
+Computes the [Float Index](../proposals/float-index.md) basket (§3) and says
+why each coin is in or out: Float coin, graduated at least 7 days ago, not
+paused (operator flag or pool swaps disabled), paired side of its CPMM pool
+at least `--min-pool-usd` (default $50,000), ranked by 30-day fees, then
+weighted by √market cap with the single-coin cap and, with `--aum-usd`, the
+liquidity cap (`--liq-factor-bps`, default 10%). `--discover` also lists
+every graduated pool on the platform config (`getProgramAccounts`).
+
+30-day fees are not on chain in a queryable form yet, so they come from a
+`stats.json` (see [`examples/index-stats.sample.json`](../../examples/index-stats.sample.json)):
+
+| Field | Meaning |
+| --- | --- |
+| `platformConfig` | Float's LaunchLab platform config (or pass `--platform-config`) |
+| `prices` | USD per whole paired token, keyed by `SOL`, `USDC` or mint (`USDC` defaults to 1) |
+| `coins[].mint` / `pair` | Coin mint and its pair (`SOL`, `USDC` or the paired mint; default `SOL`) |
+| `coins[].fees30dUsd` | USD value of the coin's fees that went through Float's split in the window |
+| `coins[].paused` / `pausedReason` | Operator exclusion flag with its public reason |
+| `windowDays`, `asOf` | Window length (default 30) and snapshot time |
+
+### `index simulate --deposit <sol> --days <n> --stats <stats.json> [--sol-usd <price>]`
+
+Simulates a genesis-epoch creation (50 bps proposed creation fee, basket
+bought through each coin's pool), the holder rewards the deposit would pass
+through (`fees30dUsd / windowDays × 17.5% × share of the coin's holder
+base`) and an in-kind redemption sold back through the same pools. It
+assumes Float's payout bot pays program-owned holders, which is unconfirmed
+(spec §6). The output is a scenario, not a forecast.
+
 ## Transactions
 
 ### `buy <coin-mint> <amount> --keypair <file>` / `sell <coin-mint> <amount> --keypair <file>`

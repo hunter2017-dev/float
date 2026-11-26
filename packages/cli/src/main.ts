@@ -2,6 +2,7 @@
 import * as cmd from "./commands.ts";
 import { family } from "./family.ts";
 import { lobby } from "./lobby.ts";
+import { floatIndex } from "./floatIndex.ts";
 import { UsageError, parseArgs } from "./util.ts";
 
 const HELP = `float — community CLI for Float coins on Solana
@@ -34,6 +35,10 @@ Proposals (community, not official Float features)
          --children N --volume USD   [--days 30] [--mode B|A] [--fee-bps 75] [--holders-bps 1750]
   lobby simulate --deposits <csv>    Fair Launch Lobby allocation, uniform price and refunds
          (--pool <launchlab-pool> | --virtual-base N --virtual-quote N) [--max-supply-bps 1500 --wallet-supply-bps 100]
+  index weights --stats <json>       Float Index basket: why each coin is in or out
+         [--platform-config <addr>] [--discover] [--n 10] [--cap-bps 1500] [--aum-usd <usd>]
+  index simulate --deposit <sol>     Creation, pass-through rewards and redemption (scenarios)
+         --days N --stats <json>     [--sol-usd <price>]
 
 Transactions (simulated unless --send)
   buy <coin-mint> <amount> --keypair <file>   Buy on the bonding curve
@@ -61,6 +66,7 @@ const COMMANDS: Record<string, (a: ReturnType<typeof parseArgs>, out: (s: string
   buyback: cmd.buyback,
   family,
   lobby,
+  index: floatIndex,
 };
 
 export async function run(argv: string[], out: (s: string) => void = console.log): Promise<number> {
