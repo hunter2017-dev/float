@@ -295,6 +295,47 @@ export function quoteSellExactIn(pool: LaunchLabPool, amountIn: bigint, rates: F
   };
 }
 
+export interface ConstantCurveParams {
+  /** Total supply of the coin (base units). */
+  supply: bigint;
+  /** Coins the curve sells before graduating (base units). */
+  totalBaseSell: bigint;
+  /** Quote raised when the curve completes (quote units). */
+  totalQuoteFundRaising: bigint;
+  /** `GlobalConfig.migrate_fee` (quote units). */
+  migrateFee?: bigint;
+  /** Vesting-locked base amount (base units). */
+  lockedAmount?: bigint;
+}
+
+/**
+ * Initial virtual reserves of a constant-product curve (curve_type 0).
+ *
+ * The curve's end price equals the price at which the leftover base
+ * (`supply − totalBaseSell − locked`) is paired with the raised quote
+ * (`totalQuoteFundRaising − migrateFee`) in the CPMM pool:
+ *
+ *   d  = (Q − mf)·B / (S − B − L) − Q
+ *   vb = ((Q − mf)·B² / (S − B − L)) / d
+ *   vq = Q² / d
+ *
+ * Integer divisions in this order reproduce the reserves LaunchLab stores in
+ * `PoolState` (checked against a real default pool in the tests).
+ */
+export function constantCurveVirtualReserves(p: ConstantCurveParams): { virtualBase: bigint; virtualQuote: bigint } {
+  const mf = p.migrateFee ?? 0n;
+  const locked = p.lockedAmount ?? 0n;
+  const migrateBase = p.supply - p.totalBaseSell - locked;
+  const migrateQuote = p.totalQuoteFundRaising - mf;
+  if (p.totalBaseSell <= 0n || migrateBase <= 0n || migrateQuote <= 0n) throw new RangeError("Invalid constant curve parameters");
+  const d = (migrateQuote * p.totalBaseSell) / migrateBase - p.totalQuoteFundRaising;
+  if (d <= 0n) throw new RangeError("Curve parameters give no valid virtual reserves (sell share too small for the raise)");
+  return {
+    virtualBase: (migrateQuote * p.totalBaseSell * p.totalBaseSell) / migrateBase / d,
+    virtualQuote: (p.totalQuoteFundRaising * p.totalQuoteFundRaising) / d,
+  };
+}
+
 /** Fraction of the curve sold so far (0..1); the coin graduates at 1. */
 export function bondingProgress(pool: LaunchLabPool): number {
   if (pool.total_quote_fund_raising === 0n) return 0;

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import * as cmd from "./commands.ts";
+import { family } from "./family.ts";
 import { UsageError, parseArgs } from "./util.ts";
 
 const HELP = `float — community CLI for Float coins on Solana
@@ -25,6 +26,12 @@ Offline
   buyback <sol> --pool <cpmm-pool>   Split a buyback into ≤1%-impact buys
           (or --sol-reserve X --float-reserve Y)
 
+Proposals (community, not official Float features)
+  family check <parent>              Is a coin eligible as a Coin Families parent?
+         --platform-config <addr>    [--pair SOL] [--paired-usd <price>] [--pool <cpmm-pool>]
+  family simulate --parent <mint>    Parent demand from N children (scenarios, not forecasts)
+         --children N --volume USD   [--days 30] [--mode B|A] [--fee-bps 75] [--holders-bps 1750]
+
 Transactions (simulated unless --send)
   buy <coin-mint> <amount> --keypair <file>   Buy on the bonding curve
   sell <coin-mint> <amount> --keypair <file>  Sell on the bonding curve
@@ -49,6 +56,7 @@ const COMMANDS: Record<string, (a: ReturnType<typeof parseArgs>, out: (s: string
   payouts: cmd.payouts,
   airdrop: cmd.airdrop,
   buyback: cmd.buyback,
+  family,
 };
 
 export async function run(argv: string[], out: (s: string) => void = console.log): Promise<number> {

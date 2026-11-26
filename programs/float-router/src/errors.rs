@@ -85,6 +85,25 @@ impl From<CoreError> for RouterError {
             CoreError::InvalidReserves => RouterError::InvalidReserves,
             CoreError::InvalidProof => RouterError::InvalidProof,
             CoreError::InvalidAccountData => RouterError::InvalidAccountData,
+            // Coin Families rules (float_core::family). No router instruction
+            // calls them yet; each gets its own RouterError code with the
+            // on-chain instructions. Listed explicitly so that new
+            // CoreError variants still fail to compile here.
+            CoreError::InvalidParams
+            | CoreError::ParentNotFloatCoin
+            | CoreError::ParentNotGraduated
+            | CoreError::ParentTooYoung
+            | CoreError::ParentPoolTooThin
+            | CoreError::ParentPaused
+            | CoreError::FamilyTooDeep
+            | CoreError::FamilyCycle
+            | CoreError::FamilyModeMismatch
+            | CoreError::RouteEmpty
+            | CoreError::RouteTooLong
+            | CoreError::RouteBroken
+            | CoreError::RoutePoolReused
+            | CoreError::RoutePoolNotPinned
+            | CoreError::ExceedsUnpaid => RouterError::InvalidAccountData,
         }
     }
 }

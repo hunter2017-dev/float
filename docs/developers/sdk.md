@@ -30,6 +30,7 @@ import { Connection, PublicKey, MINTS, launchLab, cpmm, burnAndEarn, splitFees }
 | `launchCost`, `normalizeTicker`, `isReuseFeeRefunded` | Tickers |
 | `listBurns`, `listPayouts`, `summarizePayouts` | History |
 | `formatUnits`, `parseUnits` | Amount formatting without floating point |
+| `families.*` | [Coin Families](../proposals/coin-families.md) proposal: parent eligibility, lineage and route rules (mirror of `float-core::family`), `planRoute`, `curveParamsForTargetUsd`, `simulateFamily`, `observeParent` |
 
 All amounts are `bigint` in raw base units.
 
