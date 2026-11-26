@@ -113,6 +113,26 @@ uses the parent's CPMM pool. The output is a scenario, not a forecast.
 | `--decay` | `1` (flat volume); `0.95` = −5% per day |
 | `--price-usd` | parent price when it has no pool (e.g. `$FLOAT` without `--pool`) |
 
+### `lobby simulate --deposits <file.csv> (--pool <launchlab-pool> | --virtual-base N --virtual-quote N)`
+
+Simulates a [Fair Launch Lobby](../proposals/fair-launch-lobby.md): derives
+`max_raise` and `wallet_cap` from the genesis curve (§6.1), caps each wallet,
+checks the quorum, quotes the single lobby buy and prints every wallet's
+spent amount, refund and tokens, the uniform price, and the curve price after
+the lobby versus genesis. `--pool` reads the genesis reserves, supply, curve
+size and fee rates from an existing LaunchLab pool on the same curve.
+
+CSV columns: `wallet,amount`, amounts in paired-token units. See
+[`examples/lobby-deposits.sample.csv`](../../examples/lobby-deposits.sample.csv).
+
+| Flag | Default |
+| --- | --- |
+| `--max-supply-bps` | `1500` (15% of supply, at most 2000) |
+| `--wallet-supply-bps` | `100` (1% of supply) |
+| `--min-raise` / `--min-wallets` | smallest unit / `10` |
+| `--fee-rate` (offline) | `10000` (the official 1% fee, in 1e-6 units) |
+| `--supply` (offline) | 1,000,000,000 coins (official) at `--base-decimals 6` |
+
 ## Transactions
 
 ### `buy <coin-mint> <amount> --keypair <file>` / `sell <coin-mint> <amount> --keypair <file>`

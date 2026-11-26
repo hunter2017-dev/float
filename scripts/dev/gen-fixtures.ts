@@ -9,6 +9,7 @@ import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { PublicKey, buildAirdropTree, toHex } from "@float-community/sdk";
 import { buildFamilyVectors } from "./fixtures/family.ts";
+import { buildLobbyVectors } from "./fixtures/lobby.ts";
 
 const fixture = (name: string) => fileURLToPath(new URL(`../../crates/float-core/tests/fixtures/${name}`, import.meta.url));
 
@@ -36,3 +37,4 @@ write("airdrop-merkle.json", {
 // --------------------------------------------------------- feature proposals
 
 write("family-vectors.json", buildFamilyVectors());
+write("lobby-allocation.json", buildLobbyVectors());

@@ -31,6 +31,8 @@ import { Connection, PublicKey, MINTS, launchLab, cpmm, burnAndEarn, splitFees }
 | `listBurns`, `listPayouts`, `summarizePayouts` | History |
 | `formatUnits`, `parseUnits` | Amount formatting without floating point |
 | `families.*` | [Coin Families](../proposals/coin-families.md) proposal: parent eligibility, lineage and route rules (mirror of `float-core::family`), `planRoute`, `curveParamsForTargetUsd`, `simulateFamily`, `observeParent` |
+| `lobby.*` | [Fair Launch Lobby](../proposals/fair-launch-lobby.md) proposal: params, phases, caps, allocation and unlock (mirror of `float-core::lobby`), §7 PDAs, `genesisFromPool`, `simulateLobby` |
+| `launchLab.constantCurveVirtualReserves` | Initial virtual reserves of a constant-product curve from its parameters |
 
 All amounts are `bigint` in raw base units.
 
