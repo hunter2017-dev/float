@@ -59,6 +59,10 @@ pub enum CoreError {
     WalletCapExceeded,
     /// A lobby withdrawal exceeds the wallet's deposit.
     InsufficientDeposit,
+    /// Index weight caps cannot add up to 100 % (lower N or raise the caps).
+    InfeasibleCaps,
+    /// An index vault holds less than its tracked quantity.
+    TrackedExceedsBalance,
 }
 
 impl core::fmt::Display for CoreError {
@@ -91,6 +95,8 @@ impl core::fmt::Display for CoreError {
             Self::LobbyWrongPhase => "lobby action not allowed in this phase",
             Self::WalletCapExceeded => "deposit exceeds the wallet cap",
             Self::InsufficientDeposit => "withdrawal exceeds the deposit",
+            Self::InfeasibleCaps => "index caps cannot sum to 10000 bps",
+            Self::TrackedExceedsBalance => "vault balance below tracked quantity",
         };
         f.write_str(s)
     }

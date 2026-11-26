@@ -1,0 +1,11 @@
+{
+  "asOf": "2026-11-25T00:00:00Z",
+  "windowDays": 30,
+  "platformConfig": "<Float's LaunchLab platform config: read it with `float pool <mint>` on any coin listed on floatlaunch.xyz/tokens>",
+  "prices": { "SOL": 150, "USDC": 1 },
+  "coins": [
+    { "mint": "<coin mint>", "pair": "SOL", "fees30dUsd": 125000 },
+    { "mint": "<coin mint>", "pair": "USDC", "fees30dUsd": 64000 },
+    { "mint": "<coin mint>", "pair": "<paired mint>", "fees30dUsd": 18000, "paused": true, "pausedReason": "issuer paused the paired stock" }
+  ]
+}
