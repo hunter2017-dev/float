@@ -17,6 +17,7 @@
 //! | [`guard`] | Minimum outputs for guarded fee-cycle swaps |
 //! | [`merkle`] | Leaf/node hashing and proof verification for trader airdrops |
 //! | [`launchlab`] | Zero-copy reads of the LaunchLab `PoolState` fields the router needs |
+//! | [`family`] | Coin Families: parent eligibility, lineage, conversion routes, Mode B accounting |
 
 #![cfg_attr(not(test), no_std)]
 #![forbid(unsafe_code)]
@@ -26,6 +27,7 @@ pub mod buyback;
 pub mod cpmm;
 pub mod cpmm_state;
 pub mod error;
+pub mod family;
 pub mod guard;
 pub mod launchlab;
 pub mod merkle;
