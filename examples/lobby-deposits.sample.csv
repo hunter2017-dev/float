@@ -1,0 +1,24 @@
+# Sample deposits for: npm run float -- lobby simulate --deposits examples/lobby-deposits.sample.csv --pool <launchlab-pool>
+# amount is in paired-token units (SOL here). Repeated wallets are summed; anything above the wallet cap is capped.
+wallet,amount
+w01,0.25
+w02,0.30
+w03,0.28
+w04,0.20
+w05,0.285
+w06,0.29
+w07,0.15
+w08,0.27
+w09,0.26
+w10,0.28
+w11,0.29
+w12,0.22
+w13,0.30
+w14,0.28
+w15,0.25
+w16,0.27
+w17,0.29
+w18,0.18
+w19,0.28
+w20,0.29
+w01,0.10

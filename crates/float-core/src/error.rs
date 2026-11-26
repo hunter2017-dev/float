@@ -53,6 +53,12 @@ pub enum CoreError {
     RoutePoolNotPinned,
     /// Amount exceeds the unpaid holder rewards it is drawn from.
     ExceedsUnpaid,
+    /// The lobby action is not allowed in the current phase.
+    LobbyWrongPhase,
+    /// A wallet's cumulative lobby deposit would exceed `wallet_cap`.
+    WalletCapExceeded,
+    /// A lobby withdrawal exceeds the wallet's deposit.
+    InsufficientDeposit,
 }
 
 impl core::fmt::Display for CoreError {
@@ -82,6 +88,9 @@ impl core::fmt::Display for CoreError {
             Self::RoutePoolReused => "route reuses a pool",
             Self::RoutePoolNotPinned => "route uses a pool that is not pinned",
             Self::ExceedsUnpaid => "amount exceeds unpaid holder rewards",
+            Self::LobbyWrongPhase => "lobby action not allowed in this phase",
+            Self::WalletCapExceeded => "deposit exceeds the wallet cap",
+            Self::InsufficientDeposit => "withdrawal exceeds the deposit",
         };
         f.write_str(s)
     }

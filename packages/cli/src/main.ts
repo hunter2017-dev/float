@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import * as cmd from "./commands.ts";
 import { family } from "./family.ts";
+import { lobby } from "./lobby.ts";
 import { UsageError, parseArgs } from "./util.ts";
 
 const HELP = `float — community CLI for Float coins on Solana
@@ -31,6 +32,8 @@ Proposals (community, not official Float features)
          --platform-config <addr>    [--pair SOL] [--paired-usd <price>] [--pool <cpmm-pool>]
   family simulate --parent <mint>    Parent demand from N children (scenarios, not forecasts)
          --children N --volume USD   [--days 30] [--mode B|A] [--fee-bps 75] [--holders-bps 1750]
+  lobby simulate --deposits <csv>    Fair Launch Lobby allocation, uniform price and refunds
+         (--pool <launchlab-pool> | --virtual-base N --virtual-quote N) [--max-supply-bps 1500 --wallet-supply-bps 100]
 
 Transactions (simulated unless --send)
   buy <coin-mint> <amount> --keypair <file>   Buy on the bonding curve
@@ -57,6 +60,7 @@ const COMMANDS: Record<string, (a: ReturnType<typeof parseArgs>, out: (s: string
   airdrop: cmd.airdrop,
   buyback: cmd.buyback,
   family,
+  lobby,
 };
 
 export async function run(argv: string[], out: (s: string) => void = console.log): Promise<number> {

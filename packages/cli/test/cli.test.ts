@@ -271,6 +271,48 @@ test("family simulate: 5 children × $200k/day buy parent through its pool, labe
   assert.match(spec.out, /Scenarios, not forecasts/);
 });
 
+// ------------------------------------------------------- Fair Launch Lobby
+
+const SAMPLE_DEPOSITS = join(import.meta.dirname, "../../../examples/lobby-deposits.sample.csv");
+
+test("lobby simulate --pool: genesis reserves from a real pool, oversubscribed sample fills pro rata", async () => {
+  const { code, out } = await cli("lobby", "simulate", "--deposits", SAMPLE_DEPOSITS, "--pool", poolAddr.toBase58(), "--json");
+  assert.equal(code, 0, out);
+  const j = JSON.parse(out);
+  assert.equal(j.curve.virtualBase, "1073025605596382");
+  assert.equal(j.curve.feeRate, "10000"); // 0.25 % protocol + 0.75 % platform
+  assert.equal(j.caps.maxRaise, "4924656210");
+  assert.equal(j.caps.walletCap, "285072078");
+  assert.equal(j.outcome, "finalized");
+  assert.equal(j.depositors, 20);
+  assert.equal(j.raiseSpent, j.caps.maxRaise);
+  assert.ok(BigInt(j.totalDeposits) > BigInt(j.raiseSpent));
+  const w01 = j.rows.find((r: { wallet: string }) => r.wallet === "w01");
+  assert.equal(w01.requested, "350000000");
+  assert.equal(w01.deposit, j.caps.walletCap);
+  assert.ok(BigInt(j.tokensBought) <= 150_000_000_000_000n);
+});
+
+test("lobby simulate (table): uniform price and curve move after the lobby", async () => {
+  const { code, out } = await cli("lobby", "simulate", "--deposits", SAMPLE_DEPOSITS, "--pool", poolAddr.toBase58());
+  assert.equal(code, 0, out);
+  assert.match(out, /Caps: max raise 4\.92465621 \(15\.00% of supply\), wallet cap 0\.285072078 \(1\.00%\)/);
+  assert.match(out, /quorum met/);
+  assert.match(out, /Uniform price: .* per coin for everyone/);
+  assert.match(out, /Curve price: genesis .* → after the lobby/);
+  assert.match(out, /not an official Float feature/);
+});
+
+test("lobby simulate offline: --virtual-base/--virtual-quote, missed quorum refunds everyone", async () => {
+  const { code, out } = await cli("lobby", "simulate", "--deposits", SAMPLE_DEPOSITS, "--virtual-base", "1073025605596382", "--virtual-quote", "30000852951",
+    "--total-base-sell", "793100000000000", "--min-wallets", "25");
+  assert.equal(code, 0, out);
+  assert.match(out, /quorum MISSED/);
+  assert.match(out, /Outcome: cancelled/);
+  assert.equal((await cli("lobby", "simulate", "--deposits", SAMPLE_DEPOSITS)).code, 2);
+  assert.equal((await cli("lobby", "simulate", "--deposits", SAMPLE_DEPOSITS, "--pool", poolAddr.toBase58(), "--max-supply-bps", "2500")).code, 1);
+});
+
 test("family simulate: Mode A reports parent locked at graduation", async () => {
   const { code, out } = await cli("family", "simulate", "--parent", parentCoin.toBase58(), "--mode", "A", "--children", "10", "--volume", "50000",
     "--paired-usd", "150", "--days", "7", "--net-inflow-bps", "300", "--grad-prob", "0.2", "--locked-usd", "40000");

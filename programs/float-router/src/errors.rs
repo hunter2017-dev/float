@@ -104,6 +104,9 @@ impl From<CoreError> for RouterError {
             | CoreError::RoutePoolReused
             | CoreError::RoutePoolNotPinned
             | CoreError::ExceedsUnpaid => RouterError::InvalidAccountData,
+            // Fair Launch Lobby rules (float_core::lobby): same as above,
+            // dedicated codes come with the lobby instructions.
+            CoreError::LobbyWrongPhase | CoreError::WalletCapExceeded | CoreError::InsufficientDeposit => RouterError::InvalidAccountData,
         }
     }
 }
