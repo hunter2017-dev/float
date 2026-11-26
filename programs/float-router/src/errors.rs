@@ -107,6 +107,9 @@ impl From<CoreError> for RouterError {
             // Fair Launch Lobby rules (float_core::lobby): same as above,
             // dedicated codes come with the lobby instructions.
             CoreError::LobbyWrongPhase | CoreError::WalletCapExceeded | CoreError::InsufficientDeposit => RouterError::InvalidAccountData,
+            // Float Index rules (float_core::index) belong to the future
+            // float-index program, which will map them to its own codes.
+            CoreError::InfeasibleCaps | CoreError::TrackedExceedsBalance => RouterError::InvalidAccountData,
         }
     }
 }

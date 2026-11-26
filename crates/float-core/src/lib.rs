@@ -19,6 +19,7 @@
 //! | [`launchlab`] | Zero-copy reads of the LaunchLab `PoolState` fields the router needs |
 //! | [`family`] | Coin Families: parent eligibility, lineage, conversion routes, Mode B accounting |
 //! | [`lobby`] | Fair Launch Lobby: parameters, phases, caps from curve reserves, pro-rata allocation, unlock |
+//! | [`index`] | Float Index: basket weights, oracle-free creation, in-kind redemption, rewards, rebalance plans |
 
 #![cfg_attr(not(test), no_std)]
 #![forbid(unsafe_code)]
@@ -30,6 +31,7 @@ pub mod cpmm_state;
 pub mod error;
 pub mod family;
 pub mod guard;
+pub mod index;
 pub mod launchlab;
 pub mod lobby;
 pub mod merkle;
